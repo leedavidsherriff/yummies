@@ -776,3 +776,51 @@ main, header, footer { position: relative; z-index: 2; }
   .spark, .dust { animation: none; opacity: 0; }
   .hero-cta, .call-btn, .wa-btn, .opt, .sticky-bar { transition: none; }
 }
+/* ── Shop favourites ──────────────────────────────────────────────────────── */
+.favourites { margin-bottom: clamp(30px, 4vw, 48px); }
+.fav-label {
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 0.26em; text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 14px;
+}
+.fav-label span { color: var(--smoke); letter-spacing: 0.14em; }
+.fav-row {
+  display: flex; gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 6px;
+  scrollbar-width: none;
+}
+.fav-row::-webkit-scrollbar { display: none; }
+.fav-card {
+  flex: 0 0 auto;
+  width: clamp(190px, 46vw, 240px);
+  scroll-snap-align: start;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--panel);
+  transition: border-color 0.15s, transform 0.15s;
+}
+.fav-card:hover { border-color: var(--amber); transform: translateY(-2px); }
+.fav-card:active { transform: scale(0.985); }
+.fav-card img {
+  display: block; width: 100%; aspect-ratio: 16 / 10;
+  object-fit: cover;
+}
+.fav-meta { display: block; padding: 12px 14px 14px; }
+.fav-name {
+  display: block;
+  font-size: 17px; letter-spacing: 0.02em;
+  color: var(--cream);
+  line-height: 1.05;
+}
+.fav-desc {
+  display: block; margin-top: 5px;
+  font-size: 12px; font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--smoke);
+}

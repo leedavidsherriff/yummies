@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { BIZ } from './config.js'
 import { ART } from './ingredients.jsx'
 import { primeAudio, slamSound, flickSound, isMuted, setMuted } from './sounds.js'
-import { CLIPS, FINALES, SET_PLATE, clipKeyFor } from './clips.js'
+import { CLIPS, FINALES, SET_PLATE, clipKeyFor, resolveClip } from './clips.js'
 
 /* ── Utilities ──────────────────────────────────────────────────────────── */
 
@@ -724,6 +724,23 @@ const defaultSelections = () => {
   return sel
 }
 
+// What's already on the bread — the bed any new clip has to land on.
+function buildContext(tab, sel) {
+  let meat = null
+  let salad = null
+  for (const group of tab.groups) {
+    const picked = group.items.find((i) => sel[group.id]?.includes(i.id))
+    if (!picked) continue
+    if (group.id === 'meat' || group.id === 'patty') {
+      if (typeof picked.layer === 'string') meat = picked.layer
+    }
+    if (group.id === 'salad' || group.id === 'toppings') {
+      if (picked.clip) salad = picked.clip
+    }
+  }
+  return { meat, salad }
+}
+
 function deriveLayers(tab, sel) {
   const out = []
   const tabSel = sel[tab.id]
@@ -877,9 +894,11 @@ function Builder({ reduced }) {
       const meatItem = meatGroup.items.find((i) =>
         sel[activeTabId][meatGroup.id]?.includes(i.id)
       )
-      const key =
+      const base =
         item.clip ??
         (typeof item.layer === 'string' ? clipKeyFor(item.layer, meatItem?.layer) : null)
+      // Land it on what's already built, not on a bare doner.
+      const key = resolveClip(base, buildContext(tab, sel[activeTabId]))
       const clip = key && CLIPS[key]
       if (clip) {
         soundMuteUntil.current = performance.now() + 4000
@@ -910,11 +929,13 @@ function Builder({ reduced }) {
   const STAGE = { bread: 0, bun: 1, meat: 2, patty: 2, salad: 3, toppings: 3, sauce: 4 }
   const selectedClips = useMemo(() => {
     const found = [] // { key, still, stage }
+    const ctx = buildContext(tab, sel[activeTabId])
     for (const group of tab.groups) {
       for (const item of group.items) {
         if (!sel[activeTabId][group.id]?.includes(item.id)) continue
-        const key =
+        const base =
           item.clip ?? (typeof item.layer === 'string' ? clipKeyFor(item.layer, null) : null)
+        const key = resolveClip(base, ctx)
         if (key && CLIPS[key]) {
           found.push({ key, still: CLIPS[key].still, stage: STAGE[group.id] ?? -1 })
         }
@@ -1052,6 +1073,59 @@ function Builder({ reduced }) {
     sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  // ── Shop favourites ───────────────────────────────────────────────────────
+  // One tap loads a whole build — meat, salad and sauce together — and lands on
+  // the build page with the finished thing already on the board. Only fully
+  // filmed combinations belong here, so the quickest path through the demo is
+  // also the best-looking one.
+  const pickFavourite = (fav) => {
+    primeAudio()
+    const t = BIZ.builder.tabs.find((x) => x.id === fav.tab)
+    if (!t) return
+    setActiveTabId(fav.tab)
+    prefetchTabClips(fav.tab)
+    const next = Object.fromEntries(
+      t.groups.map((g) => [g.id, fav.sel[g.id] ?? (g.hidden ? [g.items[0].id] : [])])
+    )
+    setSel((prev) => ({ ...prev, [fav.tab]: next }))
+    setScreen('build')
+    if (!reduced) {
+      const ctx = buildContext(t, next)
+      // Play the top of the build — the sauce if there is one, else the salad.
+      const topGroup = ['sauce', 'toppings', 'salad'].find((gid) => next[gid]?.length)
+      const group = t.groups.find((g) => g.id === topGroup)
+      const item = group?.items.find((i) => next[topGroup].includes(i.id))
+      const base =
+        item?.clip ?? (typeof item?.layer === 'string' ? item.layer : null)
+      const clip = resolveClip(base, ctx) && CLIPS[resolveClip(base, ctx)]
+      if (clip) {
+        soundMuteUntil.current = performance.now() + 4000
+        setFilmCue({ src: clip.src, nonce: Date.now() })
+      }
+    }
+    sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const favourites = useMemo(() => {
+    const list = BIZ.builder.bestSellers || []
+    return list.map((f) => {
+      const t = BIZ.builder.tabs.find((x) => x.id === f.tab)
+      const ctx = t ? buildContext(t, f.sel) : {}
+      // The card shows the real end frame of the build, resolved the same way
+      // the panel resolves it — so a card is never prettier than the thing it
+      // loads, and it upgrades itself the moment a better variant is filmed.
+      let still = null
+      for (const gid of ['sauce', 'extras', 'toppings', 'salad', 'meat', 'patty']) {
+        const group = t?.groups.find((g) => g.id === gid)
+        const item = group?.items.find((i) => f.sel[gid]?.includes(i.id))
+        const base = item?.clip ?? (typeof item?.layer === 'string' ? item.layer : null)
+        const key = resolveClip(base, ctx)
+        if (key && CLIPS[key]) { still = CLIPS[key].still; break }
+      }
+      return { ...f, still: still || SET_PLATE }
+    })
+  }, [])
+
   const backToMenu = () => {
     setScreen('menu')
     setFilmCue(null)
@@ -1111,6 +1185,24 @@ function Builder({ reduced }) {
 
       {screen === 'menu' ? (
         <div className="menu-screen">
+          {favourites.length > 0 && (
+            <div className="favourites">
+              <p className="fav-label">
+                Shop favourites <span>— one tap, the lot</span>
+              </p>
+              <div className="fav-row">
+                {favourites.map((f) => (
+                  <button key={f.id} className="fav-card" onClick={() => pickFavourite(f)}>
+                    <img src={f.still} alt="" loading="lazy" />
+                    <span className="fav-meta">
+                      <span className="fav-name display">{f.name}</span>
+                      <span className="fav-desc">{f.desc}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="menu-cards">
             {menuCards.map((c) => (
               <button
@@ -1162,9 +1254,11 @@ function Builder({ reduced }) {
                   {copied ? 'Copied ✓' : 'Copy order — text it ahead'}
                 </button>
               </div>
-              <a className={`call-btn${BIZ.whatsapp ? ' secondary' : ''}`} href={BIZ.phoneHref}>
-                Call it through <small>{BIZ.phone}</small>
-              </a>
+              {BIZ.phone && (
+                <a className={`call-btn${BIZ.whatsapp ? ' secondary' : ''}`} href={BIZ.phoneHref}>
+                  Call it through <small>{BIZ.phone}</small>
+                </a>
+              )}
             </div>
           )}
         </div>
@@ -1299,9 +1393,11 @@ function Builder({ reduced }) {
               </div>
             )}
 
-            <a className={`call-btn${BIZ.whatsapp ? ' secondary' : ''}`} href={BIZ.phoneHref}>
-              Call it through <small>{BIZ.phone}</small>
-            </a>
+            {BIZ.phone && (
+              <a className={`call-btn${BIZ.whatsapp ? ' secondary' : ''}`} href={BIZ.phoneHref}>
+                Call it through <small>{BIZ.phone}</small>
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -1326,9 +1422,11 @@ function Builder({ reduced }) {
         >
           Wrap it
         </button>
-        <a href={BIZ.phoneHref} tabIndex={barVisible ? 0 : -1}>
-          Call
-        </a>
+        {BIZ.phone && (
+          <a href={BIZ.phoneHref} tabIndex={barVisible ? 0 : -1}>
+            Call
+          </a>
+        )}
       </div>
     </section>
   )
@@ -1364,9 +1462,11 @@ function Hero() {
           {BIZ.name.slice(0, 1)}
           <span>·</span>
         </p>
-        <a className="phone" href={BIZ.phoneHref}>
-          {BIZ.phone}
-        </a>
+        {BIZ.phone && (
+          <a className="phone" href={BIZ.phoneHref}>
+            {BIZ.phone}
+          </a>
+        )}
       </div>
 
       <div className="hero-core">
@@ -1441,9 +1541,11 @@ function InfoStrip() {
             {BIZ.copy.orderHeading[0]} <span>{BIZ.copy.orderHeading[1]}</span>
           </h3>
           <p>{BIZ.copy.orderBlurb}</p>
-          <a className="big-phone display" href={BIZ.phoneHref}>
-            {BIZ.phone}
-          </a>
+          {BIZ.phone && (
+            <a className="big-phone display" href={BIZ.phoneHref}>
+              {BIZ.phone}
+            </a>
+          )}
         </div>
       </div>
     </section>

@@ -35,6 +35,15 @@ export const CLIPS = {
   'sauce-chilli': clip('sauce-chilli'),
   'sauce-mint': clip('sauce-mint'),
   'sauce-bbq': clip('sauce-bbq'),
+  // ── Combination variants ────────────────────────────────────────────────────
+  // Filmed on the bed of a specific build state, so the sauce lands on the salad
+  // that's actually there. Keys are read by resolveClip(); files use `--` where
+  // the key uses `@` and `.` so they stay filename-safe.
+  'sauce-garlic@salad-full': clip('sauce-garlic--salad-full'),
+  'sauce-chilli@salad-full': clip('sauce-chilli--salad-full'),
+  'sauce-garlic-chilli@salad-works': clip('sauce-garlic-chilli--salad-works'),
+  'salad-full@chicken': clip('salad-full--chicken'),
+  'sauce-garlic@chicken.salad-full': clip('sauce-garlic--chicken-salad-full'),
 }
 
 export const FINALES = {
@@ -51,4 +60,39 @@ export function clipKeyFor(layerId, baseMeatArt) {
   if (layerId === 'BUN_SEEDED') return 'bun-seeded'
   if (layerId === 'DOUBLE_MEAT') return baseMeatArt || null
   return layerId
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Combination-aware lookup.
+//
+// A sauce doesn't land on a bare doner — it lands on whatever the customer has
+// already built. So every clip can have variants filmed on a specific bed, and
+// the site reaches for the most specific one it actually has:
+//
+//   sauce-garlic@chicken.salad-full   garlic, over full salad, on chicken
+//   sauce-garlic@salad-full           garlic, over full salad
+//   sauce-garlic@chicken              garlic, straight onto chicken
+//   sauce-garlic                      the original: garlic on a bare doner
+//
+// Salad is checked before meat on purpose — once salad is on, it's the salad the
+// sauce pours over and the meat is mostly hidden. Nothing here needs to exist;
+// anything missing falls through to the plain key, which is exactly what the
+// site did before. New variants improve it one render at a time.
+//
+// ctx: { meat, salad } — the meat's `layer` ('doner') and the salad's `clip`
+// key ('salad-full'), or null for either.
+// ─────────────────────────────────────────────────────────────────────────────
+export function variantsFor(baseKey, ctx = {}) {
+  const { meat, salad } = ctx
+  const out = []
+  if (meat && salad) out.push(`${baseKey}@${meat}.${salad}`)
+  if (salad) out.push(`${baseKey}@${salad}`)
+  if (meat) out.push(`${baseKey}@${meat}`)
+  out.push(baseKey)
+  return out
+}
+
+export function resolveClip(baseKey, ctx) {
+  if (!baseKey) return null
+  return variantsFor(baseKey, ctx).find((k) => CLIPS[k]) ?? null
 }

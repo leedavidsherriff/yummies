@@ -44,6 +44,10 @@ export const CLIPS = {
   'sauce-garlic-chilli@salad-works': clip('sauce-garlic-chilli--salad-works'),
   'salad-full@chicken': clip('salad-full--chicken'),
   'sauce-garlic@chicken.salad-full': clip('sauce-garlic--chicken-salad-full'),
+  'sauce-chilli@chicken.salad-full': clip('sauce-chilli--chicken-salad-full'),
+  'sauce-bbq@salad-full': clip('sauce-bbq--salad-full'),
+  'sauce-mint@salad-full': clip('sauce-mint--salad-full'),
+  'salad-full@mixed': clip('salad-full--mixed'),
 }
 
 export const FINALES = {

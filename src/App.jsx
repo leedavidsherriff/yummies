@@ -1074,30 +1074,35 @@ function Builder({ reduced }) {
   }
 
   // ── Shop favourites ───────────────────────────────────────────────────────
-  // One tap loads a whole build — meat, salad and sauce together — and lands on
-  // the build page with the finished thing already on the board. Only fully
-  // filmed combinations belong here, so the quickest path through the demo is
-  // also the best-looking one.
+  // A favourite is a starting point, never a finished order. The card pictures
+  // what people actually order — that's the appetite — but tapping it drops you
+  // on the meat and nothing else, so the salad and the sauce are still the
+  // customer's to choose and to watch land. `fav.sel` describes the picture;
+  // only its meat is applied here.
   const pickFavourite = (fav) => {
     primeAudio()
     const t = BIZ.builder.tabs.find((x) => x.id === fav.tab)
     if (!t) return
     setActiveTabId(fav.tab)
     prefetchTabClips(fav.tab)
+    const meatGroup = t.groups[0]
     const next = Object.fromEntries(
-      t.groups.map((g) => [g.id, fav.sel[g.id] ?? (g.hidden ? [g.items[0].id] : [])])
+      t.groups.map((g) => [
+        g.id,
+        g.id === meatGroup.id
+          ? fav.sel[g.id] ?? []
+          : g.hidden
+            ? [g.items[0].id]
+            : [],
+      ])
     )
     setSel((prev) => ({ ...prev, [fav.tab]: next }))
     setScreen('build')
     if (!reduced) {
-      const ctx = buildContext(t, next)
-      // Play the top of the build — the sauce if there is one, else the salad.
-      const topGroup = ['sauce', 'toppings', 'salad'].find((gid) => next[gid]?.length)
-      const group = t.groups.find((g) => g.id === topGroup)
-      const item = group?.items.find((i) => next[topGroup].includes(i.id))
-      const base =
-        item?.clip ?? (typeof item?.layer === 'string' ? item.layer : null)
-      const clip = resolveClip(base, ctx) && CLIPS[resolveClip(base, ctx)]
+      const item = meatGroup.items.find((i) => next[meatGroup.id]?.includes(i.id))
+      const base = item?.clip ?? (typeof item?.layer === 'string' ? item.layer : null)
+      const key = resolveClip(base, buildContext(t, next))
+      const clip = key && CLIPS[key]
       if (clip) {
         soundMuteUntil.current = performance.now() + 4000
         setFilmCue({ src: clip.src, nonce: Date.now() })
@@ -1188,7 +1193,7 @@ function Builder({ reduced }) {
           {favourites.length > 0 && (
             <div className="favourites">
               <p className="fav-label">
-                Shop favourites <span>— one tap, the lot</span>
+                {BIZ.copy.favouritesHeading[0]} <span>{BIZ.copy.favouritesHeading[1]}</span>
               </p>
               <div className="fav-row">
                 {favourites.map((f) => (
@@ -1333,9 +1338,13 @@ function Builder({ reduced }) {
                       {summary.joinNames(summary.sauces).replace(/^./, (c) => c.toUpperCase())}
                       {summary.joinNames(summary.sauces).includes('sauce') ? '' : ' sauce'}.{' '}
                     </>
-                  ) : tab.groups.find((g) => g.id === 'sauce')?.hidden ? null : (
+                  ) : tab.groups.find((g) => g.id === 'sauce')?.hidden ? null : sel[
+                      activeTabId
+                    ].sauce?.length ? (
+                    // Only once they've actually chosen it. An untouched build
+                    // hasn't turned the sauce down, it just hasn't got there yet.
                     <span className="muted">No sauce — bold move. </span>
-                  )}
+                  ) : null}
                   {summary.extras.length > 0 && <>Plus {summary.joinNames(summary.extras)}.</>}
                 </>
               ) : (

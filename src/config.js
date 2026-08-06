@@ -64,6 +64,7 @@ export const BIZ = {
     builderHeading: ['Build it.', 'Watch the price.'],
     builderBlurb:
       'Pick your meat, load it how you want it, ring it through. What you see is what goes in the wrap.',
+    favouritesHeading: ['Shop favourites', '— pick one, then build it your way'],
     hoursHeading: ['Open', 'every night'],
     locationHeading: ['Number', '102'],
     locationBlurb: "You'll smell the grill before you see the sign.",
@@ -98,9 +99,11 @@ export const BIZ = {
   // meal deals aren't filmed and deliberately aren't here — see PITCH.md.
   builder: {
     // ── Shop favourites ──────────────────────────────────────────────────────
-    // One tap loads the whole build. The card art is the real end frame of that
-    // combination, resolved through the same variant lookup the panel uses — so
-    // each of these gets truer as its clips land, and never oversells.
+    // A shortcut into the builder, not a pre-filled order. `sel` describes the
+    // build the card pictures — its art is that combination's real end frame,
+    // resolved through the same variant lookup the panel uses, so it gets truer
+    // as clips land and never oversells. Tapping applies only the meat: the
+    // salad and the sauce stay the customer's to pick and to watch land.
     bestSellers: [
       {
         id: 'fav-doner-salad-garlic',

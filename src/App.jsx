@@ -450,8 +450,11 @@ function FilmOverlay({ cue, onActive }) {
         })
       }
     }
-    if (v.readyState >= 1) begin()
-    else v.onloadedmetadata = begin
+    // Always load() and wait for the NEW clip's metadata. Checking readyState
+    // here reads the PREVIOUS clip's state — on a busy main thread play() then
+    // races the load reset and the film silently never shows.
+    v.onloadedmetadata = begin
+    v.load()
     const onPlaying = () => {
       setVisible(true)
       onActive(true)
@@ -462,13 +465,27 @@ function FilmOverlay({ cue, onActive }) {
       onActive(false)
       cue.onDone?.()
     }
+    // One retry on load error — a momentary network blip (Wi-Fi scan, cell
+    // handover) shouldn't cost the customer their film.
+    let retried = false
+    const onError = () => {
+      if (!retried) {
+        retried = true
+        setTimeout(() => {
+          v.onloadedmetadata = begin
+          v.load()
+        }, 350)
+        return
+      }
+      onEnded()
+    }
     v.addEventListener('playing', onPlaying)
     v.addEventListener('ended', onEnded)
-    v.addEventListener('error', onEnded)
+    v.addEventListener('error', onError)
     return () => {
       v.removeEventListener('playing', onPlaying)
       v.removeEventListener('ended', onEnded)
-      v.removeEventListener('error', onEnded)
+      v.removeEventListener('error', onError)
       v.onloadedmetadata = null
     }
   }, [cue, onActive])

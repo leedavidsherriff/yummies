@@ -25,6 +25,11 @@ export const BIZ = {
   // front of the owner, which sells the idea far better than a dead link.
   whatsapp: '',
 
+  // Demo checkout — the full pay flow with a test card and a paid screen, but
+  // no processor behind it and no card ever charged. Turns on the "Pay now"
+  // button and the special-requests box in the order panel.
+  payments: true,
+
   hours: [
     { days: 'Mon – Thu', time: '3pm – 11pm' },
     { days: 'Fri – Sat', time: '3pm – 11.30pm' },

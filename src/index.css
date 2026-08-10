@@ -824,3 +824,181 @@ main, header, footer { position: relative; z-index: 2; }
   letter-spacing: 0.02em;
   color: var(--smoke);
 }
+
+/* ── Special requests ─────────────────────────────────────────────────────── */
+.note-box {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 0.8em 1em;
+  font: inherit;
+  font-size: 14px;
+  color: var(--cream);
+  background: color-mix(in srgb, var(--charcoal) 55%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  resize: none;
+}
+.note-box::placeholder { color: var(--smoke); }
+.note-box:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+/* ── Pay now ──────────────────────────────────────────────────────────────── */
+.pay-btn {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  font-size: 21px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--charcoal);
+  background: linear-gradient(180deg, var(--amber), var(--ember));
+  padding: 0.8em 1em 0.7em;
+  border-radius: 14px;
+  box-shadow: 0 6px 30px color-mix(in srgb, var(--ember) 30%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: transform 0.12s ease;
+}
+.pay-btn:hover { transform: translateY(-1px); }
+.pay-btn:active { transform: scale(0.98); }
+
+/* When Pay is the headline act, WhatsApp steps back a row */
+.wa-btn.secondary {
+  background: none;
+  color: var(--cream);
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+
+/* ── Demo checkout sheet ──────────────────────────────────────────────────── */
+.co-overlay {
+  position: fixed; inset: 0;
+  z-index: 120;
+  display: flex; align-items: flex-end; justify-content: center;
+  background: color-mix(in srgb, var(--charcoal) 72%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.co-sheet {
+  width: min(480px, 100%);
+  max-height: 92svh;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: 22px 22px 0 0;
+  padding: 20px 20px calc(22px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -18px 60px rgba(0, 0, 0, 0.6);
+}
+@media (min-width: 640px) {
+  .co-overlay { align-items: center; }
+  .co-sheet { border-radius: 22px; border-bottom: 1px solid var(--line); }
+}
+.co-head { display: flex; align-items: center; justify-content: space-between; }
+.co-title { font-size: 26px; letter-spacing: 0.03em; }
+.co-close {
+  font-size: 26px; line-height: 1;
+  color: var(--smoke);
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+.co-close:hover { color: var(--cream); }
+.co-lines { list-style: none; margin-top: 14px; }
+.co-lines li {
+  display: flex; justify-content: space-between; gap: 14px;
+  font-size: 13.5px;
+  padding: 7px 0;
+  border-bottom: 1px dashed var(--line);
+}
+.co-lines li span:last-child { white-space: nowrap; font-weight: 700; }
+.co-note-line span:first-child { color: var(--amber); }
+.co-total {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 12px 0 4px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--smoke);
+}
+.co-total .display { font-size: 30px; color: var(--ember); letter-spacing: 0.02em; }
+.co-field { display: block; margin-top: 12px; }
+.co-field span {
+  display: block;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--smoke);
+  margin-bottom: 6px;
+}
+.co-field input {
+  width: 100%;
+  font: inherit; font-size: 16px;
+  color: var(--cream);
+  background: color-mix(in srgb, var(--charcoal) 55%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.7em 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+.co-field input:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.co-field input::placeholder { color: color-mix(in srgb, var(--smoke) 60%, transparent); }
+.co-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.co-test {
+  display: block;
+  margin: 12px 0 0 auto;
+  font-size: 12.5px; font-weight: 700;
+  color: var(--amber);
+  border-bottom: 1px dashed color-mix(in srgb, var(--amber) 50%, transparent);
+  padding-bottom: 1px;
+}
+.co-pay {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  font-size: 21px; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--charcoal);
+  background: linear-gradient(180deg, var(--amber), var(--ember));
+  padding: 0.85em 1em 0.75em;
+  border-radius: 14px;
+  box-shadow: 0 6px 30px color-mix(in srgb, var(--ember) 30%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: transform 0.12s ease, opacity 0.2s;
+}
+.co-pay:active { transform: scale(0.98); }
+.co-pay.off { opacity: 0.35; cursor: not-allowed; }
+.co-demo {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--smoke);
+}
+.co-wait { padding: 46px 0 40px; text-align: center; color: var(--cream); }
+.co-wait p { margin-top: 16px; font-weight: 500; }
+.co-spin {
+  display: inline-block;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 3px solid var(--line);
+  border-top-color: var(--amber);
+  animation: co-rotate 0.8s linear infinite;
+}
+@keyframes co-rotate { to { transform: rotate(360deg); } }
+.co-done { text-align: center; padding: 18px 0 4px; }
+.co-tick {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 84px; height: 84px;
+  border-radius: 50%;
+  color: var(--charcoal);
+  background: linear-gradient(180deg, var(--amber), var(--ember));
+  box-shadow: 0 10px 44px color-mix(in srgb, var(--ember) 45%, transparent);
+  animation: co-pop 0.45s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+.co-tick path {
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: co-draw 0.4s 0.25s ease forwards;
+}
+@keyframes co-pop { from { transform: scale(0.3); opacity: 0; } }
+@keyframes co-draw { to { stroke-dashoffset: 0; } }
+.co-paid { font-size: 30px; margin-top: 16px; letter-spacing: 0.03em; }
+.co-ref { margin-top: 6px; color: var(--cream); }
+.co-ref strong { color: var(--amber); }
+.co-when { margin-top: 8px; font-size: 13.5px; color: var(--smoke); max-width: 30ch; margin-inline: auto; }
+@media (prefers-reduced-motion: reduce) {
+  .co-spin, .co-tick, .co-tick path { animation: none; }
+  .co-tick path { stroke-dashoffset: 0; }
+}

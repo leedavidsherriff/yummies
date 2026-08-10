@@ -886,11 +886,44 @@ function WhatsAppButton({ href, secondary }) {
   )
 }
 
+// ── The deal bar ─────────────────────────────────────────────────────────────
+// The order total fills the track toward the threshold; crossing it knocks the
+// percentage off and says what was saved. An upsell that reads at arm's length.
+function DealBar({ total, deal, saving }) {
+  if (!deal || total <= 0) return null
+  const progress = Math.min(1, total / deal.threshold)
+  const unlocked = saving > 0
+  return (
+    <div className={`deal${unlocked ? ' done' : ''}`}>
+      <p className="deal-label">
+        {unlocked ? (
+          <>
+            <strong>{deal.percent}% off unlocked</strong> — saving {gbp(saving)}
+          </>
+        ) : (
+          <>
+            <strong>{gbp(deal.threshold - total)} away</strong> from {deal.percent}% off your
+            order
+          </>
+        )}
+      </p>
+      <div className="deal-track" role="progressbar" aria-valuenow={Math.round(progress * 100)} aria-valuemin={0} aria-valuemax={100}>
+        <span className="deal-fill" style={{ width: `${progress * 100}%` }} />
+      </div>
+      {unlocked && (
+        <p className="deal-topay">
+          To pay <strong>{gbp(total - saving)}</strong>
+        </p>
+      )}
+    </div>
+  )
+}
+
 // ── Demo checkout ────────────────────────────────────────────────────────────
 // The whole pay flow — card sheet, processing beat, paid screen — with nothing
 // behind it. It says so on the sheet: this exists so an owner can feel what
 // their customers would feel, not so anyone can be charged.
-function Checkout({ total, lines, note, onPaid, onClose }) {
+function Checkout({ total, lines, note, discount, onPaid, onClose }) {
   const [stage, setStage] = useState('form') // form | processing | done
   const [name, setName] = useState('')
   const [num, setNum] = useState('')
@@ -935,6 +968,12 @@ function Checkout({ total, lines, note, onPaid, onClose }) {
                 </li>
               ))}
               {note && <li className="co-note-line"><span>Note: {note}</span><span /></li>}
+              {discount && (
+                <li className="co-deal-line">
+                  <span>{discount.percent}% off (over {gbp(discount.threshold)})</span>
+                  <span>−{gbp(discount.saving)}</span>
+                </li>
+              )}
             </ul>
             <div className="co-total">
               <span>Total</span>
@@ -1148,6 +1187,14 @@ function Builder({ reduced }) {
 
   const removeFromOrder = (id) => setOrder((o) => o.filter((x) => x.id !== id))
 
+  // The deal: crossing the threshold takes the percentage off the whole order.
+  const deal = BIZ.deal
+  const dealSaving =
+    deal && runningTotal >= deal.threshold
+      ? Math.round(runningTotal * deal.percent) / 100
+      : 0
+  const toPay = runningTotal - dealSaving
+
   // Checkout covers everything banked plus whatever's mid-build right now —
   // the same set of lines orderText() sends to WhatsApp.
   const checkoutLines = () => {
@@ -1169,7 +1216,10 @@ function Builder({ reduced }) {
     const rows = order.map((o, i) => `${i + 1}. ${o.text} — ${gbp(o.total)}`)
     if (summary.base) rows.push(`${order.length + 1}. ${summary.text} — ${gbp(total)}`)
     const noteLine = note.trim() ? `\nNote: ${note.trim()}` : ''
-    return `${BIZ.name} order:\n${rows.join('\n')}\nTotal: ${gbp(runningTotal)}${noteLine}`
+    const dealLines = dealSaving
+      ? `\n${deal.percent}% off (over ${gbp(deal.threshold)}): −${gbp(dealSaving)}\nTo pay: ${gbp(toPay)}`
+      : ''
+    return `${BIZ.name} order:\n${rows.join('\n')}\nTotal: ${gbp(runningTotal)}${dealLines}${noteLine}`
   }
 
   // The order lands on the shop's phone as a message they can read back at the
@@ -1437,6 +1487,7 @@ function Builder({ reduced }) {
                   <span>Order total</span>
                   <AnimatedPrice value={orderTotal} className="order-grand-num" reduced={reduced} />
                 </div>
+                <DealBar total={runningTotal} deal={deal} saving={dealSaving} />
                 <textarea
                   className="note-box"
                   value={note}
@@ -1446,7 +1497,7 @@ function Builder({ reduced }) {
                 />
                 {BIZ.payments && (
                   <button className="pay-btn display" onClick={() => setCheckout(true)}>
-                    Pay now · {gbp(runningTotal)}
+                    Pay now · {gbp(toPay)}
                   </button>
                 )}
                 <WhatsAppButton href={waHref()} secondary={!!BIZ.payments} />
@@ -1591,6 +1642,7 @@ function Builder({ reduced }) {
                   <AnimatedPrice value={runningTotal} className="order-grand-num" reduced={reduced} />
                 </div>
                 <WhatsAppButton href={waHref()} />
+                <DealBar total={runningTotal} deal={deal} saving={dealSaving} />
                 <textarea
                   className="note-box"
                   value={note}
@@ -1600,7 +1652,7 @@ function Builder({ reduced }) {
                 />
                 {BIZ.payments && (
                   <button className="pay-btn display" onClick={() => setCheckout(true)}>
-                    Pay now · {gbp(runningTotal)}
+                    Pay now · {gbp(toPay)}
                   </button>
                 )}
                 <button className="copy-btn" onClick={copyOrder}>
@@ -1621,9 +1673,14 @@ function Builder({ reduced }) {
 
       {checkout && (
         <Checkout
-          total={runningTotal}
+          total={toPay}
           lines={checkoutLines()}
           note={note.trim()}
+          discount={
+            dealSaving
+              ? { percent: deal.percent, threshold: deal.threshold, saving: dealSaving }
+              : null
+          }
           onPaid={orderPaid}
           onClose={() => setCheckout(false)}
         />

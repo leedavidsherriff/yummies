@@ -1002,3 +1002,44 @@ main, header, footer { position: relative; z-index: 2; }
   .co-spin, .co-tick, .co-tick path { animation: none; }
   .co-tick path { stroke-dashoffset: 0; }
 }
+
+/* ── The deal bar ─────────────────────────────────────────────────────────── */
+.deal { margin-top: 16px; }
+.deal-label {
+  font-size: 13px;
+  color: var(--smoke);
+}
+.deal-label strong { color: var(--amber); font-weight: 700; }
+.deal.done .deal-label strong { color: var(--ember); text-transform: uppercase; letter-spacing: 0.06em; }
+.deal-track {
+  margin-top: 8px;
+  height: 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--charcoal) 60%, transparent);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.deal-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--amber), var(--ember));
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.deal.done .deal-fill {
+  box-shadow: 0 0 18px color-mix(in srgb, var(--ember) 70%, transparent);
+}
+.deal-topay {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--smoke);
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.deal-topay strong {
+  font-family: var(--font-display);
+  font-size: 24px;
+  color: var(--ember);
+  letter-spacing: 0.02em;
+}
+.co-deal-line span:first-child { color: var(--ember); font-weight: 700; }
+.co-deal-line span:last-child { color: var(--ember); }

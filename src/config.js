@@ -30,6 +30,11 @@ export const BIZ = {
   // button and the special-requests box in the order panel.
   payments: true,
 
+  // The upsell bar: order total builds toward the threshold, and crossing it
+  // takes the percentage off. One line to retune per shop — £30 wants
+  // { threshold: 30, percent: 10 }.
+  deal: { threshold: 20, percent: 10 },
+
   hours: [
     { days: 'Mon – Thu', time: '3pm – 11pm' },
     { days: 'Fri – Sat', time: '3pm – 11.30pm' },

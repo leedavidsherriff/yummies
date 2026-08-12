@@ -504,7 +504,15 @@ function FilmOverlay({ cue, onActive }) {
       role={held ? 'button' : undefined}
       aria-label={held ? 'Back to your build' : undefined}
     >
-      <video ref={videoRef} playsInline preload="auto" aria-hidden="true" />
+      <video
+        ref={videoRef}
+        playsInline
+        preload="auto"
+        disablePictureInPicture
+        disableRemotePlayback
+        controlsList="nodownload noplaybackrate noremoteplayback"
+        aria-hidden="true"
+      />
       {held && <p className="film-hint">Tap to go back</p>}
     </div>
   )
@@ -1720,25 +1728,36 @@ function Builder({ reduced }) {
 function Hero() {
   return (
     <header className="hero">
+      {/* Poster always renders under the video: if autoplay is refused the
+          clip stays at opacity 0 and the still stands in — never a play
+          button (see skills/hero/references/player.md). */}
+      {BIZ.heroPosterUrl && (
+        <img className="hero-media" src={BIZ.heroPosterUrl} alt="" aria-hidden="true" />
+      )}
       {BIZ.heroVideoUrl ? (
         <video
           className="hero-media"
           src={BIZ.heroVideoUrl}
-          poster={BIZ.heroPosterUrl || undefined}
           autoPlay
           muted
           loop
           playsInline
+          preload="auto"
+          disablePictureInPicture
+          disableRemotePlayback
+          controlsList="nodownload noplaybackrate noremoteplayback"
           aria-hidden="true"
+          // React only sets the muted *property*; iOS wants the attribute
+          // before it will autoplay at all.
+          ref={(v) => v && v.setAttribute('muted', '')}
+          onPlaying={(e) => e.currentTarget.classList.add('is-playing')}
         />
-      ) : BIZ.heroPosterUrl ? (
-        <img className="hero-media" src={BIZ.heroPosterUrl} alt="" aria-hidden="true" />
-      ) : (
+      ) : !BIZ.heroPosterUrl ? (
         <div className="hero-fallback" aria-hidden="true">
           <div className="coal" />
           <div className="coal b" />
         </div>
-      )}
+      ) : null}
 
       <div className="hero-top">
         <p className="mini display" aria-hidden="true">

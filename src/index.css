@@ -80,6 +80,18 @@ main, header, footer { position: relative; z-index: 2; }
   transform-origin: 50% 26%;
   filter: brightness(0.68) saturate(1.12);
 }
+/* House rule — no play buttons, ever (skills/hero/references/player.md).
+   The autoplay hero starts invisible and only reveals on the `playing` event,
+   so a refused autoplay shows the poster img underneath, never a start button. */
+video.hero-media { pointer-events: none; opacity: 0; transition: opacity 0.5s ease; }
+video.hero-media.is-playing { opacity: 1; }
+video::-webkit-media-controls,
+video::-webkit-media-controls-start-playback-button,
+video::-webkit-media-controls-panel,
+video::-webkit-media-controls-overlay-play-button {
+  display: none !important;
+  -webkit-appearance: none;
+}
 .hero-fallback { position: absolute; inset: 0; overflow: hidden; background: radial-gradient(120% 90% at 50% 110%, #2a130a 0%, #150c08 45%, var(--charcoal) 80%); }
 .hero-fallback .coal {
   position: absolute; left: 50%; bottom: -32vh;
